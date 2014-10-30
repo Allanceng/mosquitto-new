@@ -60,7 +60,7 @@ int _mosquitto_will_set(struct mosquitto *mosq, const char *topic, int payloadle
 
 	if(_mosquitto_topic_wildcard_pos_check(topic)) return MOSQ_ERR_INVAL;
 
-	if(mosq->will){
+	if(mosq->will){        //先删除原来老的will相关的内容，再重新创立
 		if(mosq->will->topic){
 			_mosquitto_free(mosq->will->topic);
 			mosq->will->topic = NULL;

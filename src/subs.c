@@ -570,17 +570,17 @@ void mqtt3_sub_tree_print(struct _mosquitto_subhier *root, int level)//负责打
 	leaf = root->subs;
 	while(leaf){
 		if(leaf->context){
-			printf(" (%s, %d)", leaf->context->id, leaf->qos);
+			printf(" (context->id:%s, qos:%d)", leaf->context->id, leaf->qos);
 		}else{
-			printf(" (%s, %d)", "", leaf->qos);
+			printf(" (%s, qos:%d)", "", leaf->qos);
 		}
 		leaf = leaf->next;
 	}
 	if(root->retained){
 		printf(" (r)");
 	}
-	printf("\n");
-
+        printf("\n");
+ 
 	branch = root->children;
 	while(branch){
 		mqtt3_sub_tree_print(branch, level+1);

@@ -195,14 +195,14 @@ void mqtt3_db_sys_update(struct mosquitto_db *db, int interval, time_t start_tim
 	double i_mult;
 
 	now = mosquitto_time();
-
+        
 	if(interval && now - interval > last_update){
 		uptime = now - start_time;
 		snprintf(buf, BUFLEN, "%d seconds", (int)uptime);
 		mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/uptime", 2, strlen(buf), buf, 1);
 
 		_sys_update_clients(db, buf);
-		if(last_update > 0){
+		if(last_update > 0){//last_update后面被赋值为当前时间，且是一个静态变量，故虽然第一次不会执行这里，但从第二次开始始终会执行
 			i_mult = 60.0/(double)(now-last_update);
 
 			msgs_received_interval = (g_msgs_received - msgs_received)*i_mult;
@@ -234,7 +234,7 @@ void mqtt3_db_sys_update(struct mosquitto_db *db, int interval, time_t start_tim
 			calc_load(db, buf, "$SYS/broker/load/connections/1min", exponent, connection_interval, &connection_load1);
 
 			/* 5 minute load */
-			exponent = exp(-1.0*(now-last_update)/300.0);
+ 			exponent = exp(-1.0*(now-last_update)/300.0);
 
 			calc_load(db, buf, "$SYS/broker/load/messages/received/5min", exponent, msgs_received_interval, &msgs_received_load5);
 			calc_load(db, buf, "$SYS/broker/load/messages/sent/5min", exponent, msgs_sent_interval, &msgs_sent_load5);

@@ -339,21 +339,23 @@ static void loop_handle_reads_writes(struct mosquitto_db *db, struct pollfd *pol
 	int i;
 
 	for(i=0; i<db->context_count; i++){
-		if(db->contexts[i] && db->contexts[i]->sock != INVALID_SOCKET){
+		if(db->contexts[i] && db->contexts[i]->sock != INVALID_SOCKET){//判断是否有数据需要写
 			assert(pollfds[db->contexts[i]->pollfd_index].fd == db->contexts[i]->sock);
 #ifdef WITH_TLS
 			if(pollfds[db->contexts[i]->pollfd_index].revents & POLLOUT ||
 					db->contexts[i]->want_write ||
 					(db->contexts[i]->ssl && db->contexts[i]->state == mosq_cs_new)){
 #else
-			if(pollfds[db->contexts[i]->pollfd_index].revents & POLLOUT){
+			if(pollfds[db->contexts[i]->pollfd_index].revents & POLLOUT){//POLLOUT和POLLIN应该指message的方向
 #endif
 				if(_mosquitto_packet_write(db->contexts[i])){
 					do_disconnect(db, i);
+                                        printf("write error,disconnect!\n");
 				}
+                                printf("write data!\n");
 			}
 		}
-		if(db->contexts[i] && db->contexts[i]->sock != INVALID_SOCKET){
+		if(db->contexts[i] && db->contexts[i]->sock != INVALID_SOCKET){//判断数据是否有到来，需要读取
 			assert(pollfds[db->contexts[i]->pollfd_index].fd == db->contexts[i]->sock);
 #ifdef WITH_TLS
 			if(pollfds[db->contexts[i]->pollfd_index].revents & POLLIN ||
@@ -363,13 +365,17 @@ static void loop_handle_reads_writes(struct mosquitto_db *db, struct pollfd *pol
 #endif
 				if(_mosquitto_packet_read(db, db->contexts[i])){
 					do_disconnect(db, i);
+                                        printf("read error,disconnect!\n");
 				}
+                                printf("read data!\n");
 			}
 		}
 		if(db->contexts[i] && db->contexts[i]->sock != INVALID_SOCKET){
 			if(pollfds[db->contexts[i]->pollfd_index].revents & (POLLERR | POLLNVAL)){
 				do_disconnect(db, i);
+                                printf("POLLERR  error,disconnect!\n");
 			}
+                    //    printf("POLLERR ! POLLNVA \n");
 		}
 	}
 }

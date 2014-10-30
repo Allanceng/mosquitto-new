@@ -105,7 +105,7 @@ int mqtt3_handle_publish(struct mosquitto_db *db, struct mosquitto *context)
 	bool match;
 #endif
 
-	dup = (header & 0x08)>>3;
+	dup = (header & 0x08)>>3; //这里拆包、处理，可参考_mosquitto_send_real_publish函数（封包）
 	qos = (header & 0x06)>>1;
 	if(qos == 3){
 		_mosquitto_log_printf(NULL, MOSQ_LOG_INFO,
@@ -124,6 +124,7 @@ int mqtt3_handle_publish(struct mosquitto_db *db, struct mosquitto *context)
 		_mosquitto_free(topic);
 		return 1;
 	}
+        printf("topic=%s\n", topic);
 #ifdef WITH_BRIDGE
 	if(context->bridge && context->bridge->topics && context->bridge->topic_remapping){
 		for(i=0; i<context->bridge->topic_count; i++){
@@ -195,6 +196,7 @@ int mqtt3_handle_publish(struct mosquitto_db *db, struct mosquitto *context)
 			return MOSQ_ERR_NOMEM;
 		}
 		snprintf(topic_mount, len, "%s%s", context->listener->mount_point, topic);
+                printf("topic_mount=%s,mount_point=%s\n", topic_mount, context->listener->mount_point);
 		_mosquitto_free(topic);
 		topic = topic_mount;
 	}

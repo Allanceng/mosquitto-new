@@ -41,6 +41,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 #include <mosquitto.h>
+#include <mosquitto_broker.h>
+#include <mosquitto_internal.h>
 
 /* This struct is used to pass data to callbacks.
  * An instance "ud" is created in main() and populated, then passed to
@@ -65,10 +67,59 @@ void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquit
 	int i;
 	bool res;
 
+#ifdef WITH_BROKER
+        struct mosquitto_client_msg *clientMsg;  //allan adds for test
+        struct mosquitto_msg_store  *msgStore;  //allan adds for test
+#else
+        struct mosquitto_message_all *clientMsg;
+#endif
 	assert(obj);
 	ud = (struct userdata *)obj;
 
 	if(message->retain && ud->no_retain) return;
+
+
+
+        printf("userdata:topic:%s,topic count:%d, qos:%d,filreroutcount:%d, username:%s,verbose:%d,quiet:%d,no_retain:%d,eol:%d\n",ud->topics,\
+              ud->topic_count, ud->topic_qos, ud->filter_out_count, ud->username,ud->verbose, ud->quiet,ud->no_retain, ud->eol);
+#ifdef WITH_BROKER
+
+        clientMsg = (struct mosquitto_client_msg *)malloc(sizeof(struct mosquitto_client_msg) );
+        msgStore  = (struct mosquitto_msg_store  *)malloc(sizeof(struct mosquitto_msg_store ) );
+        clientMsg = mosq->msgs;
+        while(clientMsg)
+        {
+            printf("mosq->msg:mid:%d,qos:%d,retain:%d, timestamp:%d,dup:%d,dir:%d, state:%d\n", clientMsg->mid,clientMsg->qos,clientMsg->retain,\
+            (int)clientMsg->timestamp, clientMsg->dup, clientMsg->direction, clientMsg->state);
+            msgStore = mosq->msgs->store;
+            while(msgStore)
+            {
+               printf("mosq->msgs->store: db_id:%ld, ref_count:%d, source_id:%s,destIDcount:%d,mid:%d\n",msgStore->db_id,msgStore->ref_count,\
+               msgStore->source_id, msgStore->dest_id_count, msgStore->source_id);
+               printf("mosq->msgs->store->msg: mid:%d, topic:%s, paload:%s, payloadlen:%d, qos:%d, retain:%d\n",msgStore->msg.mid, msgStore->msg.topic,\
+               msgStore->msg.payload, msgStore->msg.payloadlen, msgStore->msg.qos, msgStore->msg.retain);
+               msgStore = msgStore->next;
+            }     
+            clientMsg = clientMsg->next;
+           printf("next message!\n\n");
+        }
+
+        printf("printf finished!\n");
+#else
+
+        clientMsg = (struct mosquitto_message_all *)malloc(sizeof(struct mosquitto_message_all) );
+        while(clientMsg)
+        {
+            printf("timestamp:%d, state:%d, dup:%d\n",clientMsg->timestamp, (int)clientMsg->state, clientMsg->dup);
+            printf("msg:mid:%d,topic:%s,payload:%s,length:%d,qos:%d,retain:%d\n",clientMsg->msg.mid,clientMsg->msg.topic,clientMsg->msg.payload,\
+                   clientMsg->msg.payloadlen,clientMsg->msg.qos,clientMsg->msg.retain);
+            clientMsg = clientMsg->next;
+        }
+
+
+
+#endif        
+  
 	if(ud->filter_outs){
 		for(i=0; i<ud->filter_out_count; i++){
 			mosquitto_topic_matches_sub(ud->filter_outs[i], message->topic, &res);
