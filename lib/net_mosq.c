@@ -874,13 +874,13 @@ int _mosquitto_packet_read(struct mosquitto *mosq)
 	if(!mosq->in_packet.have_remaining){
 		do{
 			read_length = _mosquitto_net_read(mosq, &byte, 1);
+                        printf("read_length:%d\n", read_length);
 			if(read_length == 1){
-				mosq->in_packet.remaining_count++;
+				mosq->in_packet.remaining_count++; //后面调用了_mosquitto_packet_cleanup将这个值清零
 				/* Max 4 bytes length for remaining length as defined by protocol.
 				 * Anything more likely means a broken/malicious client.
 				 */
 				if(mosq->in_packet.remaining_count > 4) return MOSQ_ERR_PROTOCOL;
-
 #if defined(WITH_BROKER) && defined(WITH_SYS_TREE)
 				g_bytes_received++;
 #endif

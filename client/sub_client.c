@@ -80,8 +80,6 @@ void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquit
 
 
 
-        printf("userdata:topic:%s,topic count:%d, qos:%d,filreroutcount:%d, username:%s,verbose:%d,quiet:%d,no_retain:%d,eol:%d\n",ud->topics,\
-              ud->topic_count, ud->topic_qos, ud->filter_out_count, ud->username,ud->verbose, ud->quiet,ud->no_retain, ud->eol);
 #ifdef WITH_BROKER
 
         clientMsg = (struct mosquitto_client_msg *)malloc(sizeof(struct mosquitto_client_msg) );
@@ -129,8 +127,8 @@ void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquit
 
 	if(ud->verbose){
 		if(message->payloadlen){
-			printf("%s ", message->topic);
-			fwrite(message->payload, 1, message->payloadlen, stdout);
+			printf("topic:%s ", message->topic);
+			fwrite(message->payload, 1, message->payloadlen, stdout);//在server端的屏幕上显示topic的逻辑就是这里
 			if(ud->eol){
 				printf("\n");
 			}
@@ -709,6 +707,7 @@ int main(int argc, char *argv[])
 		return rc;
 	}
 
+
 	rc = mosquitto_loop_forever(mosq, -1, 1);
 
 	mosquitto_destroy(mosq);
@@ -719,4 +718,3 @@ int main(int argc, char *argv[])
 	}
 	return rc;
 }
-

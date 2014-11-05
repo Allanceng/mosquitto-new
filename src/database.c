@@ -244,7 +244,7 @@ int mqtt3_db_message_delete(struct mosquitto *context, uint16_t mid, enum mosqui
 int mqtt3_db_message_insert(struct mosquitto_db *db, struct mosquitto *context, uint16_t mid, enum mosquitto_msg_direction dir, int qos, bool retain, struct mosquitto_msg_store *stored)
 {
 	struct mosquitto_client_msg *msg;
-        struct mosquitto_msg_store  *msgStore;  //allan adds for test
+        //struct mosquitto_msg_store  *msgStore;  //allan adds for test
 	enum mosquitto_msg_state state = mosq_ms_invalid;
 	int rc = 0;
 	int i;
@@ -368,21 +368,22 @@ int mqtt3_db_message_insert(struct mosquitto_db *db, struct mosquitto *context, 
 	if(qos > 0){
 		context->msg_count12++;
 	}
-
-        printf("ref_count:%d,mid:%d,timestamp:%d,dir:%d,state:%d,qos:%d,retain:%d\n",msg->store, msg->store->ref_count,msg->mid,\
+/*
+        printf("ref_count:%d,mid:%d,timestamp:%ld,dir:%d,state:%d,qos:%d,retain:%d\n",msg->store->ref_count,msg->mid,\
                msg->timestamp,  msg->direction, msg->state, msg->qos, msg->retain);
         msgStore = msg->store;
         while(msgStore)
         {
-             printf("mosq->msgs->store: db_id:%ld, ref_count:%d, source_id:%s,destIDcount:%d,mid:%d\n",msgStore->db_id,msgStore->ref_count,\
-               msgStore->source_id, msgStore->dest_id_count, msgStore->source_id);
+               printf("mosq->msgs->store: db_id:%ld, ref_count:%d, source_id:%s,destIDcount:%d,mid:%d\n",msgStore->db_id,msgStore->ref_count,\
+               msgStore->source_id, msgStore->dest_id_count, msgStore->source_mid);
                printf("mosq->msgs->store->msg: mid:%d, topic:%s, paload:%s, payloadlen:%d, qos:%d, retain:%d\n",msgStore->msg.mid, msgStore->msg.topic,\
                msgStore->msg.payload, msgStore->msg.payloadlen, msgStore->msg.qos, msgStore->msg.retain);
                msgStore = msgStore->next;
-              printf("next\n\n");
+               printf("next\n\n");
         }
 
         printf("mqtt3_db_message_insert stop\n");
+*/
 	if(db->config->allow_duplicate_messages == false && dir == mosq_md_out && retain == false){
 		/* Record which client ids this message has been sent to so we can avoid duplicates.
 		 * Outgoing messages only.
@@ -773,14 +774,33 @@ int mqtt3_db_message_write(struct mosquitto *context)
 	uint32_t payloadlen;
 	const void *payload;
 	int msg_count = 0;
+        //struct mosquitto_msg_store  *msgStore;  //allan adds for test
 
 	if(!context || context->sock == -1
 			|| (context->state == mosq_cs_connected && !context->id)){
 		return MOSQ_ERR_INVAL;
 	}
-
+        
+        //printf("mqtt3_db_message_write start\n");
+        //msgStore  = (struct mosquitto_msg_store  *)malloc(sizeof(struct mosquitto_msg_store ) );
 	tail = context->msgs;
 	while(tail){
+
+/*
+               printf("mid:%d,qos:%d,retain:%d, timestamp:%ld,dup:%d,dir:%d, state:%d\n", tail->mid,tail->qos,tail->retain,tail->timestamp,tail->dup,tail->direction, tail->state);
+               msgStore = tail->store;
+               while(msgStore)
+               {
+               printf("mosq->msgs->store: db_id:%ld, ref_count:%d, source_id:%s,destIDcount:%d,mid:%d\n",msgStore->db_id,msgStore->ref_count,\
+               msgStore->source_id, msgStore->dest_id_count, msgStore->source_id);
+               printf("mosq->msgs->store->msg: mid:%d, topic:%s, paload:%s, payloadlen:%d, qos:%d, retain:%d\n",msgStore->msg.mid, msgStore->msg.topic,\
+               msgStore->msg.payload, msgStore->msg.payloadlen, msgStore->msg.qos, msgStore->msg.retain);
+               msgStore = msgStore->next;
+               }
+              printf("next message!\n\n");
+  */ 
+
+
 		if(tail->direction == mosq_md_in){
 			msg_count++;
 		}
@@ -885,7 +905,7 @@ int mqtt3_db_message_write(struct mosquitto *context)
 
 void mqtt3_db_store_clean(struct mosquitto_db *db)
 {
-	/* FIXME - this may not be necessary if checks are made when messages are removed. */
+        /* FIXME - this may not be necessary if checks are made when messages are removed. */
 	struct mosquitto_msg_store *tail, *last = NULL;
 	int i;
 	assert(db);
@@ -929,4 +949,5 @@ void mqtt3_db_vacuum(void)
 {
 	/* FIXME - reimplement? */
 }
+
 

@@ -603,7 +603,7 @@ int mqtt3_handle_subscribe(struct mosquitto_db *db, struct mosquitto *context)
 			if(payload) _mosquitto_free(payload);
 			return 1;
 		}
-
+          //      printf("mqtt3_handle_subscribe topic:%s\n", sub);
 		if(sub){
 			if(!strlen(sub)){
 				_mosquitto_log_printf(NULL, MOSQ_LOG_INFO, "Empty subscription string from %s, disconnecting.",
@@ -662,6 +662,7 @@ int mqtt3_handle_subscribe(struct mosquitto_db *db, struct mosquitto *context)
 			}
 
 			if(qos != 0x80){
+                        //        printf("it's crutial to subclient%s\n", sub);
 				rc2 = mqtt3_sub_add(db, context, sub, qos, &db->subs);
 				if(rc2 == MOSQ_ERR_SUCCESS){
 					if(mqtt3_retain_queue(db, context, sub, qos)) rc = 1;

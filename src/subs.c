@@ -86,7 +86,7 @@ static int _subs_process(struct mosquitto_db *db, struct _mosquitto_subhier *hie
 
 	if(retain && set_retain){
 #ifdef WITH_PERSISTENCE
-		if(strncmp(topic, "$SYS", 4)){
+		if(strncmp(topic, "$SYS", 4)){ //证明这不是系统消息
 			/* Retained messages count as a persistence change, but only if
 			 * they aren't for $SYS. */
 			db->persistence_changes++;
@@ -439,6 +439,7 @@ int mqtt3_sub_remove(struct mosquitto_db *db, struct mosquitto *context, const c
 
 	subhier = root->children;
 	while(subhier){
+                printf("remove topic:%s\n", subhier->topic);
 		if(!strcmp(subhier->topic, tokens->topic)){
 			rc = _sub_remove(db, context, subhier, tokens);
 			break;
