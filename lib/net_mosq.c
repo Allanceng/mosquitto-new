@@ -855,7 +855,7 @@ int _mosquitto_packet_read(struct mosquitto *mosq)
 			if(!(mosq->bridge) && mosq->state == mosq_cs_new && (byte&0xF0) != CONNECT) return MOSQ_ERR_PROTOCOL;
 #endif
 		}else{
-			if(read_length == 0) return MOSQ_ERR_CONN_LOST; /* EOF */
+			if(read_length == 0) return MOSQ_ERR_CONN_LOST; /* EOF*/
 #ifdef WIN32
 			errno = WSAGetLastError();
 #endif
@@ -887,7 +887,7 @@ int _mosquitto_packet_read(struct mosquitto *mosq)
 				mosq->in_packet.remaining_length += (byte & 127) * mosq->in_packet.remaining_mult;
 				mosq->in_packet.remaining_mult *= 128;
 			}else{
-				if(read_length == 0) return MOSQ_ERR_CONN_LOST; /* EOF */
+				if(read_length == 0) return MOSQ_ERR_CONN_LOST; /* EOF  MOSQ_ERR_CONN_LOST的值为7，系统自动断开的情况都是从这里开始*/
 #ifdef WIN32
 				errno = WSAGetLastError();
 #endif

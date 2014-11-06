@@ -165,7 +165,7 @@ static void _config_init_reload(struct mqtt3_config *config)
 	config->retry_interval = 20;
 	config->store_clean_interval = 10;
 	//config->sys_interval = 900;
-        config->sys_interval = 10;
+        config->sys_interval = 40;
 	config->upgrade_outgoing_qos = false;
 	if(config->auth_options){
 		for(i=0; i<config->auth_option_count; i++){

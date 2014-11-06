@@ -337,6 +337,7 @@ static void loop_handle_errors(struct mosquitto_db *db, struct pollfd *pollfds)
 static void loop_handle_reads_writes(struct mosquitto_db *db, struct pollfd *pollfds)
 {
 	int i;
+        int rc;
 
 	for(i=0; i<db->context_count; i++){
 		if(db->contexts[i] && db->contexts[i]->sock != INVALID_SOCKET){//判断是否有数据需要写
@@ -363,9 +364,9 @@ static void loop_handle_reads_writes(struct mosquitto_db *db, struct pollfd *pol
 #else
 			if(pollfds[db->contexts[i]->pollfd_index].revents & POLLIN){
 #endif
-				if(_mosquitto_packet_read(db, db->contexts[i])){
+				if(rc = _mosquitto_packet_read(db, db->contexts[i])){
 					do_disconnect(db, i);
-                                        printf("read error,disconnect!\n");
+                                        printf("read error,disconnect!rc=%d\n", rc);
 				}
                                 printf("read data!\n");
 			}
