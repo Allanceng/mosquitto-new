@@ -206,6 +206,7 @@ int mqtt3_handle_publish(struct mosquitto_db *db, struct mosquitto *context)
 			_mosquitto_log_printf(NULL, MOSQ_LOG_DEBUG, "Dropped too large PUBLISH from %s (d%d, q%d, r%d, m%d, '%s', ... (%ld bytes))", context->id, dup, qos, retain, mid, topic, (long)payloadlen);
 			goto process_bad_message;
 		}
+                printf("recieved payload:%d\n", payloadlen);
 		payload = _mosquitto_calloc(payloadlen+1, sizeof(uint8_t));
 		if(!payload){
 			_mosquitto_free(topic);

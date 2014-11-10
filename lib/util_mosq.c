@@ -67,7 +67,7 @@ int _mosquitto_packet_alloc(struct _mosquitto_packet *packet)
 		}
 		remaining_bytes[packet->remaining_count] = byte;
 		packet->remaining_count++;
-	}while(remaining_length > 0 && packet->remaining_count < 5);  //the max bytes in the packeet is 128*5 = 0.625K
+	}while(remaining_length > 0 && packet->remaining_count < 5);  //协议规定最多4个字节来表示长度
 	if(packet->remaining_count == 5) return MOSQ_ERR_PAYLOAD_SIZE;
 	packet->packet_length = packet->remaining_length + 1 + packet->remaining_count;
 	packet->payload = _mosquitto_malloc(sizeof(uint8_t)*packet->packet_length);
