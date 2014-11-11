@@ -271,6 +271,7 @@ int main(int argc, char *argv[])
 
 	listener_max = -1;
 	listensock_index = 0;
+        printf("config.listener_count=%d,%s\n", config.listener_count, config.listeners[0].host);
 	for(i=0; i<config.listener_count; i++){
 		if(mqtt3_socket_listen(&config.listeners[i])){
 			_mosquitto_free(int_db.contexts);
