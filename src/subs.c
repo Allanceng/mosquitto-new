@@ -96,13 +96,16 @@ static int _subs_process(struct mosquitto_db *db, struct _mosquitto_subhier *hie
 			hier->retained->ref_count--;
 			/* FIXME - it would be nice to be able to remove the message from the store at this point if ref_count == 0 */
 			db->retained_count--;
+         //         printf("hier->retained is not null,hier->retained->ref_count:%d,db->retained_count:%d\n", hier->retained->ref_count, db->retained_count);
 		}
 		if(stored->msg.payloadlen){
 			hier->retained = stored;
 			hier->retained->ref_count++;
 			db->retained_count++;
+     //       printf("stored->msg.payloadlen is not null,topic:%shier->retained->ref_count:%d,db->retained_count:%d\n",stored->msg.topic,  hier->retained->ref_count, db->retained_count);
 		}else{
 			hier->retained = NULL;
+      //           printf("stored->msg.payloadlen is null\n");
 		}
 	}
 	while(source_id && leaf){
