@@ -566,7 +566,7 @@ void mqtt3_sub_tree_print(struct _mosquitto_subhier *root, int level)//负责打
 	int i;
 	struct _mosquitto_subhier *branch;
 	struct _mosquitto_subleaf *leaf;
-
+        struct _mosquitto_packet *packet; //allan adds
 	for(i=0; i<level*2; i++){
 		printf(" ");
 	}
@@ -575,6 +575,19 @@ void mqtt3_sub_tree_print(struct _mosquitto_subhier *root, int level)//负责打
 	while(leaf){
 		if(leaf->context){
 			printf(" (context->id:%s, qos:%d)", leaf->context->id, leaf->qos);
+                        printf("last_mid:%d\n", leaf->context->last_mid);
+                        packet = leaf->context->out_packet;
+                        while(packet)
+                        {
+                            printf("packet payload:%s\n", packet->payload);
+                            packet = packet->next;
+                        }
+                        packet = leaf->context->current_out_packet;
+                        while(packet)
+                        {
+                            printf("packet payload:%s\n", packet->payload);
+                            packet = packet->next;
+                        }
 		}else{
 			printf(" (%s, qos:%d)", "", leaf->qos);
 		}

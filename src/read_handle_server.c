@@ -661,7 +661,7 @@ int mqtt3_handle_subscribe(struct mosquitto_db *db, struct mosquitto *context)
 				}
 			}
 
-			if(qos != 0x80){
+			if(qos != 0x80){ //mosquitto_acl_check如果检查没有问题
                         //        printf("it's crutial to subclient%s\n", sub);
 				rc2 = mqtt3_sub_add(db, context, sub, qos, &db->subs);
 				if(rc2 == MOSQ_ERR_SUCCESS){
