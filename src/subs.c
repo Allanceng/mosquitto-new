@@ -92,11 +92,11 @@ static int _subs_process(struct mosquitto_db *db, struct _mosquitto_subhier *hie
 			db->persistence_changes++;
 		}
 #endif
-		if(hier->retained){
+		if(hier->retained){ //如果非空，证明这里有上次存储的retain的消息，现在有新的消息需要retain,则替换旧的消息，故要做下面的减法
 			hier->retained->ref_count--;
 			/* FIXME - it would be nice to be able to remove the message from the store at this point if ref_count == 0 */
 			db->retained_count--;
-         //         printf("hier->retained is not null,hier->retained->ref_count:%d,db->retained_count:%d\n", hier->retained->ref_count, db->retained_count);
+                  //printf("hier->retained is not null,hier->retained->ref_count:%d,db->retained_count:%d\n", hier->retained->ref_count, db->retained_count);
 		}
 		if(stored->msg.payloadlen){
 			hier->retained = stored;

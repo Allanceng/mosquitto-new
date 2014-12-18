@@ -665,7 +665,7 @@ int mqtt3_handle_subscribe(struct mosquitto_db *db, struct mosquitto *context)
                         //        printf("it's crutial to subclient%s\n", sub);
 				rc2 = mqtt3_sub_add(db, context, sub, qos, &db->subs);
 				if(rc2 == MOSQ_ERR_SUCCESS){
-					if(mqtt3_retain_queue(db, context, sub, qos)) rc = 1;
+					if(mqtt3_retain_queue(db, context, sub, qos)) rc = 1; //调用该函数保证刚上线的订阅端可以收到服务端储存的retain的消息
 				}else if(rc2 != -1){
 					rc = rc2;
 				}

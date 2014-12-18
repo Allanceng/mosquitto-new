@@ -713,7 +713,7 @@ int _mosquitto_packet_write(struct mosquitto *mosq)
 	while(mosq->current_out_packet){
 		packet = mosq->current_out_packet;
 
-		while(packet->to_process > 0){
+		while(packet->to_process > 0){//发送一个包，可能包很长，一次没有发完
 			write_length = _mosquitto_net_write(mosq, &(packet->payload[packet->pos]), packet->to_process);
 			if(write_length > 0){
 #if defined(WITH_BROKER) && defined(WITH_SYS_TREE)
