@@ -214,6 +214,7 @@ void mqtt3_config_init(struct mqtt3_config *config)
 	config->auth_plugin = NULL;
 	config->verbose = false;
 	config->message_size_limit = 0;
+        config->large_file_size_limit = 1024; //后面可以仿照message_size_limit来做，在配置文件中定义
 }
 
 void mqtt3_config_cleanup(struct mqtt3_config *config)

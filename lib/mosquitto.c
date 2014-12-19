@@ -182,7 +182,8 @@ int mosquitto_reinitialise(struct mosquitto *mosq, const char *id, bool clean_se
 	_mosquitto_packet_cleanup(&mosq->in_packet);
 	mosq->out_packet = NULL;
 	mosq->current_out_packet = NULL;
-	mosq->last_msg_in = mosquitto_time();
+	mosq->BigFile = NULL;
+        mosq->last_msg_in = mosquitto_time();
 	mosq->last_msg_out = mosquitto_time();
 	mosq->ping_t = 0;
 	mosq->last_mid = 0;

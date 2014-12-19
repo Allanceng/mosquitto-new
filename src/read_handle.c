@@ -98,6 +98,7 @@ int mqtt3_handle_publish(struct mosquitto_db *db, struct mosquitto *context)
 	struct mosquitto_msg_store *stored = NULL;
 	int len;
 	char *topic_mount;
+        bool BigFile = false;
 #ifdef WITH_BRIDGE
 	char *topic_temp;
 	int i;
@@ -206,7 +207,11 @@ int mqtt3_handle_publish(struct mosquitto_db *db, struct mosquitto *context)
 			_mosquitto_log_printf(NULL, MOSQ_LOG_DEBUG, "Dropped too large PUBLISH from %s (d%d, q%d, r%d, m%d, '%s', ... (%ld bytes))", context->id, dup, qos, retain, mid, topic, (long)payloadlen);
 			goto process_bad_message;
 		}
-                printf("recieved payload:%d\n", payloadlen);
+                if(db->config->large_file_size_limit && payloadlen > db->config->large_file_size_limit){
+                        //存储到相应位置，做特殊处理
+                        BigFile = true;
+                }
+                printf("mqtt_handle_publish recieved payload:%d\n", payloadlen);
 		payload = _mosquitto_calloc(payloadlen+1, sizeof(uint8_t));
 		if(!payload){
 			_mosquitto_free(topic);
@@ -246,11 +251,21 @@ int mqtt3_handle_publish(struct mosquitto_db *db, struct mosquitto *context)
 	}
 	switch(qos){
 		case 0:
-			if(mqtt3_db_messages_queue(db, context->id, topic, qos, retain, stored)) rc = 1;
+                        if(BigFile){//先用普通服务试一下
+                                 retain = false; //Big File不允许被retain标记
+                                 if(mqtt3_db_messages_subhier(db, context->id, topic, qos, retain, stored))
+                                     rc = 1;
+                        }else{
+ 
+                	         if(mqtt3_db_messages_queue(db, context->id, topic, qos, retain, stored)) 
+                                     rc = 1;
+                        }
 			break;
 		case 1:
-			if(mqtt3_db_messages_queue(db, context->id, topic, qos, retain, stored)) rc = 1;
-			if(_mosquitto_send_puback(context, mid)) rc = 1;
+			if(mqtt3_db_messages_queue(db, context->id, topic, qos, retain, stored)) 
+                            rc = 1;
+			if(_mosquitto_send_puback(context, mid)) 
+                            rc = 1;
 			break;
 		case 2:
 			if(!dup){

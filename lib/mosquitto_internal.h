@@ -163,6 +163,7 @@ struct mosquitto {
 	struct _mosquitto_packet in_packet;//received pakcet
 	struct _mosquitto_packet *current_out_packet;
 	struct _mosquitto_packet *out_packet;
+        struct _mosquitto_BigFile_msg *BigFile; //存储已发送的bigfile
 	struct mosquitto_message *will;
 #ifdef WITH_TLS
 	SSL *ssl;

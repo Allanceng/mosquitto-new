@@ -100,6 +100,7 @@ struct mqtt3_config {
 	char *log_file;
 	FILE *log_fptr;
 	int message_size_limit;
+        int large_file_size_limit;
 	char *password_file;
 	bool persistence;
 	char *persistence_location;
@@ -131,12 +132,18 @@ struct _mosquitto_subleaf {
 	int qos;
 };
 
+struct _mosquitto_BigFile_msg {
+        struct _mosquitto_BigFile_msg *next;
+        int mid;
+};
+
 struct _mosquitto_subhier {
 	struct _mosquitto_subhier *children;
 	struct _mosquitto_subhier *next;
 	struct _mosquitto_subleaf *subs;
 	char *topic;
-	struct mosquitto_msg_store *retained;
+	struct mosquitto_msg_store *retained;   //存储retain标记的消息
+        struct mosquitto_msg_store *large_file; //存储大文件
 };
 
 struct mosquitto_msg_store{
@@ -362,6 +369,7 @@ int mqtt3_db_message_write(struct mosquitto *context);
 int mqtt3_db_messages_delete(struct mosquitto *context);
 int mqtt3_db_messages_easy_queue(struct mosquitto_db *db, struct mosquitto *context, const char *topic, int qos, uint32_t payloadlen, const void *payload, int retain);
 int mqtt3_db_messages_queue(struct mosquitto_db *db, const char *source_id, const char *topic, int qos, int retain, struct mosquitto_msg_store *stored);
+int mqtt3_db_messages_subhier(struct mosquitto_db *db, const char *source_id, const char *topic, int qos, int retain, struct mosquitto_msg_store *stored);
 int mqtt3_db_message_store(struct mosquitto_db *db, const char *source, uint16_t source_mid, const char *topic, int qos, uint32_t payloadlen, const void *payload, int retain, struct mosquitto_msg_store **stored, dbid_t store_id);
 int mqtt3_db_message_store_find(struct mosquitto *context, uint16_t mid, struct mosquitto_msg_store **stored);
 /* Check all messages waiting on a client reply and resend if timeout has been exceeded. */
