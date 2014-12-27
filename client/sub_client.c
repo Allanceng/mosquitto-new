@@ -103,9 +103,11 @@ void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquit
         }
 
         printf("printf finished!\n");
+
 #else
 
         clientMsg = (struct mosquitto_message_all *)malloc(sizeof(struct mosquitto_message_all) );
+        clientMsg = mosq->in_messages;
         while(clientMsg)
         {
             printf("timestamp:%d, state:%d, dup:%d\n",clientMsg->timestamp, (int)clientMsg->state, clientMsg->dup);
@@ -113,7 +115,6 @@ void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquit
                    clientMsg->msg.payloadlen,clientMsg->msg.qos,clientMsg->msg.retain);  //这句导致出现订阅多个主题时客户端自动断开的现象
             clientMsg = clientMsg->next;
         }
-
 
 
 #endif        

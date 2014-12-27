@@ -67,6 +67,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <mosquitto_broker.h>
 #include <memory_mosq.h>
 #include <util_mosq.h>
+#include <errno.h>
+#include "mqtt3_protocol.h"
 
 struct _sub_token {
 	struct _sub_token *next;
@@ -84,6 +86,7 @@ static int _subs_process(struct mosquitto_db *db, struct _mosquitto_subhier *hie
         // if BigFile is true, it make sense, else useless
         int packetlen;  
 	struct _mosquitto_packet *packet = NULL;
+        ssize_t write_length;
 
         leaf = hier->subs;
 	if(retain && set_retain){
@@ -133,7 +136,7 @@ static int _subs_process(struct mosquitto_db *db, struct _mosquitto_subhier *hie
                 }
                  _mosquitto_write_string(packet, stored->msg.topic, strlen(stored->msg.topic));
                  /* Payload */
-                 if(payloadlen){
+                 if( stored->msg.payloadlen){
                     _mosquitto_write_bytes(packet, stored->msg.payload, stored->msg.payloadlen);
                  }
                  packet->pos = 0;
@@ -193,7 +196,7 @@ static int _subs_process(struct mosquitto_db *db, struct _mosquitto_subhier *hie
                             //发送packet
                             // pthread_mutex_lock(&mosq->current_out_packet_mutex); 这里差一个锁机制，不知道可不可以用这个
                             while(packet->to_process > 0){//发送一个包，可能包很长，一次没有发完
-                                write_length = _mosquitto_net_write(mosq, &(packet->payload[packet->pos]), packet->to_process);
+                                write_length = _mosquitto_net_write(leaf->context, &(packet->payload[packet->pos]), packet->to_process);
                                 if(write_length > 0){
                                     packet->to_process -= write_length;
                                     packet->pos += write_length;
@@ -744,23 +747,23 @@ static int _retain_search(struct mosquitto_db *db, struct _mosquitto_subhier *su
 		/* Subscriptions with wildcards in aren't really valid topics to publish to
 		 * so they can't have retained messages.
 		 */
-		if(!strcmp(tokens->topic, "#") && !tokens->next){
+		if(!strcmp(tokens->topic, "#") && !tokens->next){ //遇到通配符“#”
 			/* Set flag to indicate that we should check for retained messages
 			 * on "foo" when we are subscribing to e.g. "foo/#" and then exit
 			 * this function and return to an earlier _retain_search().
 			 */
 			flag = -1;
-			if(branch->retained){
+			if(branch->retained){ //处理当前topic对应的retained
 				_retain_process(db, branch->retained, context, sub, sub_qos);
 			}
-			if(branch->children){
+			if(branch->children){  //递归处理子topic对应的retained
 				_retain_search(db, branch, tokens, context, sub, sub_qos, level+1);
 			}
 		}else if(strcmp(branch->topic, "+") && (!strcmp(branch->topic, tokens->topic) || !strcmp(tokens->topic, "+"))){
-			if(tokens->next){
+			if(tokens->next){ //tokens还没有比较完
 				if(_retain_search(db, branch, tokens->next, context, sub, sub_qos, level+1) == -1
 						|| (!branch->next && tokens->next && !strcmp(tokens->next->topic, "#") && level>0)){
-
+                                       //如果遇到了通配符“#”,或者遇到了当前树中topic已比较完，而仍遇到通配符“#”
 					if(branch->retained){
 						_retain_process(db, branch->retained, context, sub, sub_qos);
 					}
