@@ -77,6 +77,7 @@ int mqtt3_db_open(struct mqtt3_config *config, struct mosquitto_db *db)
 	child->subs = NULL;
 	child->children = NULL;
 	child->retained = NULL;
+        child->large_file = NULL;
 	db->subs.children = child;
         //system init
 	child = _mosquitto_malloc(sizeof(struct _mosquitto_subhier));
@@ -93,6 +94,7 @@ int mqtt3_db_open(struct mqtt3_config *config, struct mosquitto_db *db)
 	child->subs = NULL;
 	child->children = NULL;
 	child->retained = NULL;
+        child->large_file = NULL;
 	db->subs.children->next = child;
 
 	db->unpwd = NULL;
@@ -122,6 +124,10 @@ static void subhier_clean(struct _mosquitto_subhier *subhier)
 		if(subhier->retained){
 			subhier->retained->ref_count--;
 		}
+
+                if(subhier->large_file) {
+                        subhier->large_file->ref_count--;
+                }
 		subhier_clean(subhier->children); //while delete the point ,delete its children as well
 		if(subhier->topic) _mosquitto_free(subhier->topic);
 

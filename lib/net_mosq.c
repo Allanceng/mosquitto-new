@@ -874,13 +874,13 @@ int _mosquitto_packet_read(struct mosquitto *mosq)
 	if(!mosq->in_packet.have_remaining){
 		do{
 			read_length = _mosquitto_net_read(mosq, &byte, 1);
-                        printf("read_length:%d\n", read_length);
+                        //printf("read_length:%d\n", read_length);
 			if(read_length == 1){
 				mosq->in_packet.remaining_count++; //后面调用了_mosquitto_packet_cleanup将这个值清零
 				/* Max 4 bytes length for remaining length as defined by protocol.
 				 * Anything more likely means a broken/malicious client.
 				 */
-				if(mosq->in_packet.remaining_count > 4) return MOSQ_ERR_PROTOCOL;
+				if(mosq->in_packet.remaining_count > 4) return MOSQ_ERR_PROTOCOL; //MQTT协议只规定了4个字节保存其长度
 #if defined(WITH_BROKER) && defined(WITH_SYS_TREE)
 				g_bytes_received++;
 #endif
@@ -903,7 +903,6 @@ int _mosquitto_packet_read(struct mosquitto *mosq)
 				}
 			}
 		}while((byte & 128) != 0);
-
 		if(mosq->in_packet.remaining_length > 0){
 			mosq->in_packet.payload = _mosquitto_malloc(mosq->in_packet.remaining_length*sizeof(uint8_t));
 			if(!mosq->in_packet.payload) return MOSQ_ERR_NOMEM;
@@ -911,9 +910,9 @@ int _mosquitto_packet_read(struct mosquitto *mosq)
 		}
 		mosq->in_packet.have_remaining = 1;
 	}
-	while(mosq->in_packet.to_process>0){
+	while(mosq->in_packet.to_process>0){ //前面读取的只是长度，这里根据长度读取后面真正的数据
 		read_length = _mosquitto_net_read(mosq, &(mosq->in_packet.payload[mosq->in_packet.pos]), mosq->in_packet.to_process);
-		if(read_length > 0){
+                if(read_length > 0){
 #if defined(WITH_BROKER) && defined(WITH_SYS_TREE)
 			g_bytes_received += read_length;
 #endif
@@ -930,6 +929,7 @@ int _mosquitto_packet_read(struct mosquitto *mosq)
 					 * This is an arbitrary limit, but with some consideration.
 					 * If a client can't send 1000 bytes in a second it
 					 * probably shouldn't be using a 1 second keep alive. */
+                                        printf("阻塞：mosq->in_packet.to_process:%d\n", mosq->in_packet.to_process);
 					pthread_mutex_lock(&mosq->msgtime_mutex);
 					mosq->last_msg_in = mosquitto_time();
 					pthread_mutex_unlock(&mosq->msgtime_mutex);
@@ -944,8 +944,7 @@ int _mosquitto_packet_read(struct mosquitto *mosq)
 				}
 			}
 		}
-	}
-
+	} 
 	/* All data for this packet is read. */
 	mosq->in_packet.pos = 0;
 #ifdef WITH_BROKER

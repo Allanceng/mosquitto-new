@@ -119,8 +119,8 @@ static int _subs_process(struct mosquitto_db *db, struct _mosquitto_subhier *hie
                 hier->large_file->ref_count--;
             }
             if(stored->msg.payloadlen){
-                hier->large_file->ref_count++;
                 hier->large_file = stored;
+                hier->large_file->ref_count++; //这里是前面导致server端出问题的原因，这一句放在上一句前面导致出现空指针
                 //初始化发送包信息
                 packetlen = 2 + strlen(stored->msg.topic) + stored->msg.payloadlen;
                 packet = _mosquitto_calloc(1, sizeof(struct _mosquitto_packet));
@@ -139,9 +139,9 @@ static int _subs_process(struct mosquitto_db *db, struct _mosquitto_subhier *hie
                  if( stored->msg.payloadlen){
                     _mosquitto_write_bytes(packet, stored->msg.payload, stored->msg.payloadlen);
                  }
-                 packet->pos = 0;
+                 //packet->pos = 0;
                  packet->next = NULL;
-                 packet->to_process = packet->packet_length;
+                 //packet->to_process = packet->packet_length;
                  
             }else{
                 hier->large_file = NULL;
@@ -186,26 +186,35 @@ static int _subs_process(struct mosquitto_db *db, struct _mosquitto_subhier *hie
 				client_retain = false;
 			}
                         if(BigFile){//直接发送,不保存
+
                             if(!leaf->context->BigFile){
                                 leaf->context->BigFile = _mosquitto_malloc( sizeof(struct _mosquitto_BigFile_msg) );
                                 leaf->context->BigFile->next = NULL;
                                 leaf->context->BigFile->mid = stored->msg.mid;
                             }else {
+                                _mosquitto_free(leaf->context->BigFile);
+                                leaf->context->BigFile = _mosquitto_malloc( sizeof(struct _mosquitto_BigFile_msg) );
+                                leaf->context->BigFile->next = NULL; 
                                 leaf->context->BigFile->mid = stored->msg.mid;
                             }
+                            //这两句初始化本来是在上面做的，但是改到这里是因为当有多个节点发送需要将这两个值初始化，否则只能
+                            packet->pos = 0;
+                            packet->to_process = packet->packet_length;
+
                             //发送packet
-                            // pthread_mutex_lock(&mosq->current_out_packet_mutex); 这里差一个锁机制，不知道可不可以用这个
-                            while(packet->to_process > 0){//发送一个包，可能包很长，一次没有发完
+                            // pthread_mutex_lock(&mosq->current_out_packet_mutex);// 这里差一个锁机制，不知道可不可以用这个
+                            while(packet->to_process > 0 && leaf->context->sock != INVALID_SOCKET){//发送一个包，可能包很长，一次没有发完
                                 write_length = _mosquitto_net_write(leaf->context, &(packet->payload[packet->pos]), packet->to_process);
                                 if(write_length > 0){
                                     packet->to_process -= write_length;
                                     packet->pos += write_length;
                                 }else{
-                                    if(errno == EAGAIN || errno == COMPAT_EWOULDBLOCK){
-                                    //    pthread_mutex_unlock(&mosq->current_out_packet_mutex);
-                                        return MOSQ_ERR_SUCCESS;
+                                    if(errno == EAGAIN || errno == COMPAT_EWOULDBLOCK){ //该操作可能被阻塞
+                                        //pthread_mutex_unlock(&mosq->current_out_packet_mutex);
+                                        printf("OK ya\n");
                                     }else{
-                                    //    pthread_mutex_unlock(&mosq->current_out_packet_mutex);
+                                        pthread_mutex_unlock(&mosq->current_out_packet_mutex);
+                                        printf("error ya\n");
                                         switch(errno){
                                                 case COMPAT_ECONNRESET:
                                                         return MOSQ_ERR_CONN_LOST;
@@ -215,7 +224,13 @@ static int _subs_process(struct mosquitto_db *db, struct _mosquitto_subhier *hie
                                     } 
                                 }
                              }
-                             return 0; 
+                             
+                             pthread_mutex_lock(&mosq->msgtime_mutex);
+                             leaf->context->last_msg_out = mosquitto_time();
+                             pthread_mutex_unlock(&mosq->msgtime_mutex);
+  
+                             printf("send succuss\n");
+                             //return 0; 
                         }else {
 			     if(mqtt3_db_message_insert(db, leaf->context, mid, mosq_md_out, msg_qos, client_retain, stored) == 1) 
                                  rc = 1;
